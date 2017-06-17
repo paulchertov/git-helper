@@ -2,6 +2,8 @@ from subprocess import Popen, PIPE
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
 
+from config import WIN_ENCODING
+
 
 class ConsoleCommand:
     """
@@ -61,7 +63,7 @@ class PQCmd(QThread):
     def __execute(self, command):
         print(command.text)
         process = Popen(command.text, stdin=PIPE, stdout=PIPE, shell=True)
-        command.result = process.communicate()[0].decode('cp866')
+        command.result = process.communicate()[0].decode(WIN_ENCODING)
         self.executed.emit(command)
 
     def __del__(self):
