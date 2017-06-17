@@ -1,4 +1,5 @@
 from subprocess import Popen, PIPE
+from typing import Union, List
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
 
@@ -9,23 +10,21 @@ class ConsoleCommand:
     """
     Simple wrapper for one Windows console command
     """
-    def __init__(self, text, map_result=None):
+    def __init__(self, text: Union(str, List[str]), map_result: callable=None):
         """
         :param text: text of command or list of command texts
-        :type text: Union(str | list[str])
-        :param map_result: callable for filtering a
-        :type: map_result: callable
+        :param map_result: callable for filtering cmd result
         """
         self.text = text if isinstance(text, str) else " && ".join(text)
         self.__map_result = map_result or (lambda x: x)
         self.__result = None
 
     @property
-    def result(self):
+    def result(self)->str:
         return self.__result
 
     @result.setter
-    def result(self, val):
+    def result(self, val: str):
         self.__result = self.__map_result(val)
 
 
@@ -47,7 +46,7 @@ class PQCmd(QThread):
                 self.__execute(self.__commands.pop(0))
             self.sleep(1)
 
-    def execute(self, command):
+    def execute(self, command: ConsoleCommand):
         self.__commands.append(command)
 
     @pyqtSlot()
@@ -60,7 +59,7 @@ class PQCmd(QThread):
         self.__commands = []
         self.aborted.emit()
 
-    def __execute(self, command):
+    def __execute(self, command: ConsoleCommand):
         print(command.text)
         process = Popen(command.text, stdin=PIPE, stdout=PIPE, shell=True)
         command.result = process.communicate()[0].decode(WIN_ENCODING)
