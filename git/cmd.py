@@ -1,31 +1,9 @@
 from subprocess import Popen, PIPE
-from typing import Union, List
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
 
 from config import WIN_ENCODING
-
-
-class ConsoleCommand:
-    """
-    Simple wrapper for one Windows console command
-    """
-    def __init__(self, text: Union(str, List[str]), map_result: callable=None):
-        """
-        :param text: text of command or list of command texts
-        :param map_result: callable for filtering cmd result
-        """
-        self.text = text if isinstance(text, str) else " && ".join(text)
-        self.__map_result = map_result or (lambda x: x)
-        self.__result = None
-
-    @property
-    def result(self)->str:
-        return self.__result
-
-    @result.setter
-    def result(self, val: str):
-        self.__result = self.__map_result(val)
+from .commands import ConsoleCommand
 
 
 class PQCmd(QThread):
