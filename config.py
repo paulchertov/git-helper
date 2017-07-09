@@ -9,3 +9,6 @@ GIT_NOT_TRACKED_MARKER = """
 GIT_TRACKED_MARKER = """
 (use "git reset HEAD <file>..." to unstage)
 """.strip()  # standard git string before new/updated files already added to commit
+NOT_GIT_MARKER = """
+fatal: Not a git repository (or any of the parent directories): .git
+""".strip()  # standard git string if path is not a git repository

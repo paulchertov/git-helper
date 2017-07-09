@@ -25,22 +25,40 @@ class PQCmd(QThread):
             self.sleep(1)
 
     def execute(self, command: ConsoleCommand):
+        """
+        add command for execution
+        :param command: 
+        :return: 
+        """
         self.__commands.append(command)
 
     @pyqtSlot()
     def kill(self):
+        """
+        stop thread
+        :return: None
+        """
         self.__dead = True
         self.aborted.emit()
 
     @pyqtSlot()
     def abort(self):
+        """
+        abort all planned actions
+        :return: None
+        """
         self.__commands = []
         self.aborted.emit()
 
     def __execute(self, command: ConsoleCommand):
+        """
+        execute particular console command
+        :param command: command to execute
+        :return: None
+        """
         print(command.text)
-        process = Popen(command.text, stdin=PIPE, stdout=PIPE, shell=True)
-        command.result = process.communicate()[0].decode(WIN_ENCODING)
+        process = Popen(command.text, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
+        command.set_result(*map(lambda x: x.decode(WIN_ENCODING), process.communicate()))
         self.executed.emit(command)
 
     def __del__(self):

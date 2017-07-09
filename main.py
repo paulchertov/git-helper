@@ -1,10 +1,10 @@
 import sys
-import time
 
 from PyQt5.uic import loadUi
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
 
-from git.cmd import PQCmd, ConsoleCommand
+from git.commands import GitStatusCommand
+from git.cmd import PQCmd
 
 
 class Test(QMainWindow):
@@ -23,18 +23,11 @@ class Test(QMainWindow):
         dlg.setFileMode(QFileDialog.Directory)
         if dlg.exec_():
             self.cmd.execute(
-                ConsoleCommand([
-                    "cd " + dlg.selectedFiles()[0].__repr__()[3:-1],
-                    "dir"
-                ])
-            )
-            time.sleep(1)
-            self.cmd.execute(
-                ConsoleCommand("dir")
+                GitStatusCommand(dlg.selectedFiles()[0].__repr__().strip("'"))
             )
 
     def cmd_dispatch(self, command):
-        self.result += command.result
+        self.result += repr(command.result)
         self.output.setText(self.result)
 
 
