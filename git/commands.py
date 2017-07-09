@@ -1,10 +1,10 @@
 import re
 from typing import Union, List, Any
-from collections import namedtuple
 from enum import Enum
 
 from config import GIT_NOT_TRACKED_MARKER, GIT_TRACKED_MARKER, NOT_GIT_MARKER
 from git.exceptions import CmdException, NotAGitRepository
+from model.file import FileModel
 
 
 class ConsoleCommand:
@@ -72,8 +72,6 @@ class GitStatusCommand(FolderCommand):
     'git status' command that returns files in directory:
     newly created and updated, tracked and not yet added to git
     """
-    File = namedtuple('File', 'tracked modified name')
-
     is_file = re.compile(r"\t((?:modified:)|(?:new\sfile:)|(?:deleted:))?[\s]*(.+)")
 
     StatusStates = Enum('StatusStates', 'BEFORE_ALL NOT_TRACKED TRACKED')
@@ -85,7 +83,7 @@ class GitStatusCommand(FolderCommand):
         super().__init__(path, "git status")
 
     def map_result(self, answer: str, error: str)\
-            -> Union[List[File], NotAGitRepository]:
+            -> Union[List[FileModel], NotAGitRepository]:
         """
         Mapper for 'git status' console response extracting files
         from cmd answer
@@ -112,23 +110,31 @@ class GitStatusCommand(FolderCommand):
             """
             match = self.is_file.match(line)
             if match is not None:
-                result.append(self.File(
+                result.append(FileModel(
                     tracked=tracked,
-                    modified=True if match.group(1) == "modified:" else False,
-                    name=match.group(2)
+                    status=match.group(1),
+                    path=match.group(2)
                 ))
 
         for line in lines:
             if state is self.StatusStates.BEFORE_ALL:
+                if GIT_TRACKED_MARKER in line:
+                    state = self.StatusStates.TRACKED
                 if GIT_NOT_TRACKED_MARKER in line:
                     state = self.StatusStates.NOT_TRACKED
+
             elif state == self.StatusStates.NOT_TRACKED:
                 if GIT_TRACKED_MARKER in line:
                     state = self.StatusStates.TRACKED
                 else:
                     _add_if_file(False, line)
+
             elif state is self.StatusStates.TRACKED:
-                _add_if_file(True, line)
+                if GIT_NOT_TRACKED_MARKER in line:
+                    state = self.StatusStates.NOT_TRACKED
+                else:
+                    _add_if_file(True, line)
+
         return result
 
 
