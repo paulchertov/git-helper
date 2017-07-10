@@ -7,7 +7,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 FileStatus = Enum('FileCondition', 'new modified deleted')
 
 
-class FileModel(QObject):
+class PQFileModel(QObject):
     changed = pyqtSignal()
     status_mapping = {
         "new file": FileStatus.new,
@@ -29,7 +29,7 @@ class FileModel(QObject):
         self.__path = path
 
     def copy(self):
-        return FileModel(self.tracked, self.status, self.name)
+        return PQFileModel(self.tracked, self.status, self.name)
 
     @property
     def tracked(self)->bool:

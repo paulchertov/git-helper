@@ -4,7 +4,7 @@ from enum import Enum
 
 from config import GIT_NOT_TRACKED_MARKER, GIT_TRACKED_MARKER, NOT_GIT_MARKER
 from git.exceptions import CmdException, NotAGitRepository
-from model.file import FileModel
+from model.file import PQFileModel
 
 
 class ConsoleCommand:
@@ -83,13 +83,13 @@ class GitStatusCommand(FolderCommand):
         super().__init__(path, "git status")
 
     def map_result(self, answer: str, error: str)\
-            -> Union[List[FileModel], NotAGitRepository]:
+            -> Union[List[PQFileModel], CmdException]:
         """
         Mapper for 'git status' console response extracting files
         from cmd answer
         :param answer: stdout string of 'git status' command
         :param error: stderr string of 'git status' command
-        :return: list of File named tuples or NotAGitRepository exception
+        :return: list of File named tuples or CmdException exception
         """
 
         if error:
@@ -110,7 +110,7 @@ class GitStatusCommand(FolderCommand):
             """
             match = self.is_file.match(line)
             if match is not None:
-                result.append(FileModel(
+                result.append(PQFileModel(
                     tracked=tracked,
                     status=match.group(1),
                     path=match.group(2)
