@@ -4,7 +4,7 @@ from enum import Enum
 from PyQt5.QtCore import QObject, pyqtSignal
 
 
-FileStatus = Enum('FileCondition', 'new modified deleted')
+FileStatus = Enum('FileCondition', 'new modified renamed deleted')
 
 
 class PQFileModel(QObject):
@@ -12,6 +12,7 @@ class PQFileModel(QObject):
     status_mapping = {
         "new file": FileStatus.new,
         "modified": FileStatus.modified,
+        "renamed": FileStatus.renamed,
         "deleted": FileStatus.deleted
     }
 

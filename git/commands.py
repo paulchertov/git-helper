@@ -72,7 +72,9 @@ class GitStatusCommand(FolderCommand):
     'git status' command that returns files in directory:
     newly created and updated, tracked and not yet added to git
     """
-    is_file = re.compile(r"\t((?:modified:)|(?:new\sfile:)|(?:deleted:))?[\s]*(.+)")
+    is_file = re.compile(
+        r"\t((?:modified:)|(?:new\sfile:)|(?:deleted:)|(?:renamed:))?[\s]*(.+)"
+    )
 
     StatusStates = Enum('StatusStates', 'BEFORE_ALL NOT_TRACKED TRACKED')
 
