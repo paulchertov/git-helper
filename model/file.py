@@ -29,7 +29,7 @@ class PQFileModel(QObject):
         self.__path = path
 
     def copy(self):
-        return PQFileModel(self.tracked, self.status, self.name)
+        return PQFileModel(self.tracked, self.status, self.path)
 
     @property
     def tracked(self)->bool:

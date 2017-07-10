@@ -30,7 +30,7 @@ class PQFileListController(QObject):
             self.view.layout().addWidget(child_view)
             child_view.show()
 
-    @pyqtSlot
+    @pyqtSlot()
     def clear(self):
         """
         clear model and view
@@ -61,11 +61,42 @@ class PQFileListController(QObject):
         self.populate(val)
 
 
-# TODO: implement controller
 class PQFileController(QObject):
-    """
-    Dummy for single file widget controller
-    """
     def __init__(self, model: PQFileModel):
+        """
+        
+        :param model: 
+        """
         super().__init__()
         self.__model = model
+        self.__model.changed.connect(self.redraw)
+
+        self.view = loadUi("gui/git_file.ui")
+
+        self.add_view_handlers()
+        self.view.committed.clicked.connect(self.checkbox_clicked)
+
+        self.redraw()
+
+    @pyqtSlot(bool)
+    def checkbox_clicked(self, state):
+        self.__model.tracked = state
+
+    def add_view_handlers(self):
+        """  
+        this method exists because of a weird glitch: while gui contained in
+        separate attribute, method slots are not working if not added to 
+        gui object
+        :return: None
+        """
+        self.view.checkbox_clicked = self.checkbox_clicked
+
+    @pyqtSlot()
+    def redraw(self):
+        self.view.status.setText(
+            self.__model.status.name
+        )
+        self.view.path.setText(self.__model.path)
+        self.view.committed.setChecked(1 if self.__model.tracked else 0)
+        self.view.show()
+

@@ -45,7 +45,7 @@ class PQGitSpeaker(QObject):
         )
 
     @pyqtSlot(str)
-    def set_path(self, path):
+    def set_path(self, path: str):
         """
         set path and refresh files
         :param path: git folder path
@@ -66,6 +66,7 @@ class PQGitSpeaker(QObject):
 
     @pyqtSlot()
     def get_files(self):
+        print(self.__path)
         self.cmd.execute(GitStatusCommand(self.__path))
 
     @pyqtSlot(ConsoleCommand)
