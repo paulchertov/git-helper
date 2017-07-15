@@ -1,10 +1,11 @@
-from typing import List
+from typing import Iterable
 
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 
+from model.file import PQFileModel
 from .cmd import PQCmd
 from .commands import ConsoleCommand, GitStatusCommand, GitCommitSequenceCommand
-from .exceptions import CmdException
+from .exceptions import GitException, NothingChanged
 
 
 class PQGitSpeaker(QObject):
@@ -12,9 +13,9 @@ class PQGitSpeaker(QObject):
     Facade, providing API for Cmd speaking thread
     """
 
-    # outer signals
+    # signals
     aborted = pyqtSignal()
-    error_occurred = pyqtSlot(CmdException)
+    error_occurred = pyqtSignal(GitException)
     got_files = pyqtSignal(list)
     pushed = pyqtSignal()
 
@@ -34,15 +35,44 @@ class PQGitSpeaker(QObject):
         self.__path = None
         self.__files = []
 
-    def push(self, file_paths: List[str], message: str):
+    def push(self, files: Iterable[PQFileModel], message: str):
         """
         :param message: commit message
-        :param file_paths: list of relative files paths to commit 
+        :param files: list of files with their state tu actualize 
         :return: None 
         """
-        self.cmd.execute(
-            GitCommitSequenceCommand(self.__path, file_paths, message)
-        )
+        tracked_in_git = set()
+        not_tracked_in_git = set()
+        user_wants_to_add = set()
+        user_dont_want_to_add = set()
+
+        for file in self.files:
+            if file.tracked:
+                tracked_in_git.add(file.path)
+            else:
+                not_tracked_in_git.add(file.path)
+
+        for file in files:
+            if file.tracked:
+                user_wants_to_add.add(file.path)
+            else:
+                user_dont_want_to_add.add(file.path)
+
+        files_to_commit = user_wants_to_add - tracked_in_git
+        files_to_reset = user_dont_want_to_add - not_tracked_in_git
+
+        commit_changes = tracked_in_git | files_to_commit | files_to_reset
+
+        if not commit_changes:
+            self.error_occurred.emit(NothingChanged())
+        else:
+            self.cmd.execute(
+                GitCommitSequenceCommand(
+                    self.__path,
+                    files_to_commit,
+                    files_to_reset,
+                    message)
+            )
 
     @pyqtSlot(str)
     def set_path(self, path: str):
@@ -71,8 +101,9 @@ class PQGitSpeaker(QObject):
 
     @pyqtSlot(ConsoleCommand)
     def dispatch(self, executed_command: ConsoleCommand):
-        if isinstance(executed_command.result, CmdException):
+        if isinstance(executed_command.result, GitException):
             self.error_occurred.emit(executed_command.result)
+            return
 
         if isinstance(executed_command, GitStatusCommand):
             self.__files = executed_command.result
@@ -81,3 +112,11 @@ class PQGitSpeaker(QObject):
         elif isinstance(executed_command, GitCommitSequenceCommand):
             self.pushed.emit()
             self.get_files()  # refresh changes
+
+    @property
+    def files(self):
+        return self.__files
+
+    @property
+    def path(self):
+        return self.__path
