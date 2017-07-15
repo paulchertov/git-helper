@@ -64,8 +64,7 @@ class PQFileListController(QObject):
 class PQFileController(QObject):
     def __init__(self, model: PQFileModel):
         """
-        
-        :param model: 
+        :param model: PQFileModel of controller 
         """
         super().__init__()
         self.__model = model
@@ -79,7 +78,7 @@ class PQFileController(QObject):
         self.redraw()
 
     @pyqtSlot(bool)
-    def checkbox_clicked(self, state):
+    def checkbox_clicked(self, state: bool):
         self.__model.tracked = state
 
     def add_view_handlers(self):
@@ -93,6 +92,10 @@ class PQFileController(QObject):
 
     @pyqtSlot()
     def redraw(self):
+        """
+        set actual model attributes to view widgets
+        :return: None
+        """
         self.view.status.setText(
             self.__model.status.name
         )
