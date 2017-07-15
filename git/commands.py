@@ -1,9 +1,10 @@
 import re
-from typing import Union, List, Any
+from typing import Union, List, Iterable, Any
 from enum import Enum
 
-from config import GIT_NOT_TRACKED_MARKER, GIT_TRACKED_MARKER, NOT_GIT_MARKER
-from git.exceptions import CmdException, NotAGitRepository
+from config import GIT_NOT_TRACKED_MARKER, GIT_TRACKED_MARKER,\
+    NOT_GIT_MARKER, GIT_TRACKED_NO_COMMIT_MARKER
+from git.exceptions import GitException, NotAGitRepository
 from model.file import PQFileModel
 
 
@@ -18,13 +19,13 @@ class ConsoleCommand:
         self.text = text if isinstance(text, str) else " && ".join(text)
         self.__result = None
 
-    def map_result(self, answer: str, error: str) -> Union[Any, CmdException]:
+    def map_result(self, answer: str, error: str) -> Union[Any, GitException]:
         """
         :param answer: stdout content as a string of the result of the command's execution 
         :param error: stderr content as a string of what happened during execution
         :return: resulting value if everything is ok or CmdException if error occurred 
         """
-        return answer if not error else CmdException(error)
+        return answer if not error else GitException(error)
 
     @property
     def result(self)->Any:
@@ -85,7 +86,7 @@ class GitStatusCommand(FolderCommand):
         super().__init__(path, "git status")
 
     def map_result(self, answer: str, error: str)\
-            -> Union[List[PQFileModel], CmdException]:
+            -> Union[List[PQFileModel], GitException]:
         """
         Mapper for 'git status' console response extracting files
         from cmd answer
@@ -98,7 +99,7 @@ class GitStatusCommand(FolderCommand):
             if NOT_GIT_MARKER in error:
                 return NotAGitRepository()
             else:
-                return CmdException(error)
+                return GitException(error)
 
         state = self.StatusStates.BEFORE_ALL
         lines = answer.split("\n")
@@ -122,7 +123,8 @@ class GitStatusCommand(FolderCommand):
             if state is self.StatusStates.BEFORE_ALL:
                 if GIT_TRACKED_MARKER in line:
                     state = self.StatusStates.TRACKED
-                if GIT_NOT_TRACKED_MARKER in line:
+                if GIT_NOT_TRACKED_MARKER in line \
+                        or GIT_TRACKED_NO_COMMIT_MARKER in line:
                     state = self.StatusStates.NOT_TRACKED
 
             elif state == self.StatusStates.NOT_TRACKED:
@@ -147,25 +149,29 @@ class GitCommitSequenceCommand(FolderCommand):
     'git commit -m "%message%"'
     'git push'
     """
-    def __init__(self, path: str, file_paths: List[str], message: str):
+    def __init__(self, path: str, files_to_commit: Iterable[str],
+                 files_to_reset: Iterable[str], message: str):
         """
         :param path: path to the git folder 
-        :param file_paths: list of relative paths to files to be committed
+        :param files_to_commit: list of relative paths to files to be committed
+        :param files_to_reset: list of relative paths to files to be removed from commit
         :param message: commit message
         """
         commands_sequence = \
             [
-                "add " + file_path for file_path in file_paths
+                "git add " + file_path for file_path in files_to_commit
             ] + [
-                'commit -m "{}"'.format(message.replace('"', "'")),
+                "git reset " + file_path for file_path in files_to_reset
+            ] + [
+                'git  commit -m "{}"'.format(message.replace('"', "'")),
                 "git push"
             ]
         super().__init__(path, commands_sequence)
 
-    def map_result(self, answer: str, error: str) -> Union[None, CmdException]:
+    def map_result(self, answer: str, error: str) -> Union[None, GitException]:
         """
         :param answer: cmd stdout string
         :param error:  cmd stderr string
         :return: None if everything is ok, CmdException otherwise
         """
-        return None if not error else CmdException(error)
+        return None if not error else GitException(error)
