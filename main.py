@@ -118,7 +118,6 @@ class PQGitHelper(QMainWindow):
             self.view.output.setText("Provide correct git repository folder")
         except GitException as e:
             self.view.output.setText(str(e))
-        self.redraw()
 
     @pyqtSlot()
     def redraw(self):
