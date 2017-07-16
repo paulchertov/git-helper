@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+<class>GitHelper</class>
+<widget class="QFrame" name="main_view">
+  <layout class="QGridLayout" name="grid_layout">
+    <!-- row 1 -->
+    <item row="0" column="0" colspan="1" rowspan="1">
+      <widget class="QLabel" name="commit_label">
+        <property name="text">
+          <string>Commit message</string>
+        </property>
+      </widget>
+    </item>
+    <item row="0" column="1" colspan="2" rowspan="1">
+      <widget class="QLineEdit" name="commit_message" />
+    </item>
+    <!-- row 2 -->
+    <!--
+    <item row="1" column="0" colspan="2" rowspan="1">
+        %reserved for git_file_list.ui%
+    </item>
+    -->
+    <item row="1" column="2" colspan="1" rowspan="1">
+      <widget class="QWidget" name="button_panel">
+        <layout class="QVBoxLayout">
+          <item>
+            <widget class="QPushButton" name="folder_button">
+              <property name="text">
+                <string>Select folder</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <widget class="QPushButton" name="commit_button">
+              <property name="text">
+                <string>Commit</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <widget class="QPushButton" name="refresh_button">
+              <property name="text">
+                <string>Refresh</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <spacer name="verticalSpacer">
+              <property name="orientation">
+                <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+                <size>
+                  <width>20</width>
+                  <height>40</height>
+                </size>
+              </property>
+            </spacer>
+          </item>
+        </layout>
+      </widget>
+    </item>
+    <!-- row 3 -->
+    <item row="2" column="0" rowspan="1" colspan="3">
+      <widget class="QLabel" name="output" />
+    </item>
+  </layout>
+</widget>
+</ui>
