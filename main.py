@@ -1,48 +1,36 @@
 import sys
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog,\
-    QWidget, QPushButton, QLabel, QLineEdit,\
-    QGridLayout, QVBoxLayout
+import os
+from typing import List
 
-from git.git import PQGitSpeaker
-from git.exceptions import NotAGitRepository, GitException
-from controllers.file import PQFileListController
+from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QFrame
+from PyQt5.uic import loadUi
+
+from git import PQGitSpeaker, NotAGitRepository, GitException
+from controllers import PQFileListController
+from model.file import PQFileModel
 
 
-class Test(QMainWindow):
+class PQGitHelper(QMainWindow):
     def __init__(self):
         super().__init__()
         self.result = ""
+
         # subcontrollers
         self.list = PQFileListController()
         self.git = PQGitSpeaker()
 
         # view
-        self.view = QWidget()
-        layout = QGridLayout()
-        self.error_handler = QLabel()
-        self.commit_message = QLineEdit()
+        self.view = QFrame()
+        self.view = loadUi("gui/main.ui", self.view)
 
-        buttons_panel = QWidget()
-        buttons_layout = QVBoxLayout()
+        # setting styles
+        style_path = os.path.join('gui', 'main.qss')
+        style_path = os.path.abspath(style_path)
+        self.view.setStyleSheet(open(style_path, 'r').read())
 
-        self.folder_button = QPushButton("Select folder")
-        self.commit_button = QPushButton("Commit changes")
-        self.refresh_button = QPushButton("Refresh")
-        self.refresh_button.clicked.connect(self.refresh)
-
-        buttons_layout.addWidget(self.folder_button)
-        buttons_layout.addWidget(self.commit_button)
-        buttons_layout.addWidget(self.refresh_button)
-
-        buttons_panel.setLayout(buttons_layout)
-
-        # putting it all together
-        layout.addWidget(self.commit_message, 0, 0, 1, 1)
-        layout.addWidget(self.list.view, 1, 0, 1, 1)
-        layout.addWidget(self.error_handler, 2, 0, 1, 2)
-        layout.addWidget(buttons_panel, 1, 1, 1, 1)
-
-        self.view.setLayout(layout)
+        # adding subcontrollers view
+        self.view.layout().addWidget(self.list.view, 1, 0, 1, 2)
 
         self.setCentralWidget(self.view)
         self.show()
@@ -52,58 +40,101 @@ class Test(QMainWindow):
         self.git.error_occurred.connect(self.dispatch_error)
 
         # adding handlers to view
-        self.folder_button.clicked.connect(self.select_folder)
-        self.commit_button.clicked.connect(self.commit)
-        self.refresh_button.clicked.connect(self.refresh)
+        self.view.folder_button.clicked.connect(self.select_folder)
+        self.view.commit_button.clicked.connect(self.commit)
+        self.view.refresh_button.clicked.connect(self.refresh)
+        self.view.commit_message.textChanged.connect(self.redraw)
 
+        self.redraw()
+
+    @property
+    def message(self)->str:
+        return self.view.commit_message.text()
+
+    @pyqtSlot()
     def select_folder(self):
+        """
+        Handler for select button.
+        Renders dialog for folder selection
+        :return: 
+        """
         dlg = QFileDialog()
         dlg.setFileMode(QFileDialog.Directory)
         if dlg.exec_():
             self.git.set_path(
                 dlg.selectedFiles()[0].__repr__().strip("'")
             )
+        self.redraw()
 
-    def got_files(self, files):
+    @pyqtSlot(list)
+    def got_files(self, files: List[PQFileModel]):
+        """
+        Handler for PQGitSpeaker.got_files signal.
+        Renders files to PQFilesListController's view
+        :param files: list of PQFileModel got from git
+        :return: None
+        """
         self.list.model = files
 
+    @pyqtSlot()
     def refresh(self):
+        """
+        Handler for refresh button. Removes output text and
+        tries to refresh folders files if path is set
+        :return: None
+        """
+        self.view.output.setText("")
+        self.redraw()
         if self.git.path:
             self.git.get_files()
         else:
             self.dispatch_error(NotAGitRepository())
 
-    @property
-    def message(self):
-        return self.commit_message.text()
-
-
+    @pyqtSlot()
     def commit(self):
+        """
+        Handler for commit button.
+        tries to commit changes to git
+        :return: None
+        """
         if self.message:
             self.git.push(self.list.model, self.message)
         else:
-            self.error_handler.setText("nothing to commit")
+            self.view.output.setText("nothing to commit")
 
-    def dispatch_error(self, error):
+    @pyqtSlot(GitException)
+    def dispatch_error(self, error: GitException):
+        """
+        Handler for PQGitSpeaker.error_occurred signal.
+        Displays corresponding error to self.view.output
+        :param error: error that occurred in PQGitSpeaker
+        :return: None
+        """
         try:
             raise error
-        except NotAGitRepository as e:
+        except NotAGitRepository:
             self.git.abort()
             self.list.clear()
-            self.error_handler.setText("Provide correct git repository folder")
+            self.view.output.setText("Provide correct git repository folder")
         except GitException as e:
-            self.error_handler.setText(str(e))
+            self.view.output.setText(str(e))
+        self.redraw()
 
+    @pyqtSlot()
     def redraw(self):
-        self.commit_button.setEnabled(
+        """
+        Enables or disables control buttons depending on controllers state
+        :return: None
+        """
+        self.view.commit_button.setEnabled(
             bool(self.git.path and self.message)
         )
-        self.refresh_button.setEnabled(
+        self.view.refresh_button.setEnabled(
             bool(self.git.path)
         )
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ex = Test()
+    ex = PQGitHelper()
     sys.exit(app.exec_())

@@ -2,13 +2,25 @@
 <ui version="4.0">
   <class>GitFileListView</class>
   <widget class="QFrame" name="file_list_view">
-    <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-      </sizepolicy>
-    </property>
-    <layout class="QVBoxLayout" name="vertical_layout" />
+    <layout class="QVBoxLayout" name="vertical_layout">
+      <item>
+        <widget class="QLabel" name="title">
+          <property name="text">
+            <string>Files</string>
+          </property>
+          <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QFrame" name="children_frame">
+          <layout class="QVBoxLayout" name="children_layout">
+            <!-- %children git_file.ui% -->
+          </layout>
+        </widget>
+      </item>
+    </layout>
   </widget>
 </ui>
 

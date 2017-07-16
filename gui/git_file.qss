@@ -1,0 +1,12 @@
+QFrame{
+  padding: 5px 5px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #ffffff;
+  background: #00ff00;
+}
+
+QFrame > *{
+  padding: 0px;
+  color: #ffffff;
+}

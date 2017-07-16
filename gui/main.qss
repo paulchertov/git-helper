@@ -1,0 +1,23 @@
+QFrame{
+  background: #000000;
+}
+
+QWidget{
+  padding: 10px 5px;
+  font-size: 16px;
+  font-weight: bold;
+}
+QLabel, QPushButton{
+  color: #ffffff;
+}
+#output{
+  color: #ff0000;
+}
+
+QPushButton{
+  background-color: #00ff00;
+  border: none;
+}
+QPushButton:disabled{
+  background-color: rgba(0, 255, 0, 0.5)
+}

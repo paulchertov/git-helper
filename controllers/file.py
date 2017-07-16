@@ -1,3 +1,4 @@
+import os
 from typing import List
 
 from PyQt5.uic import loadUi
@@ -13,7 +14,18 @@ class PQFileListController(QObject):
     def __init__(self):
         super().__init__()
         self.__model = []
-        self.view = loadUi("gui/git_file_list.ui")
+
+        # loading view
+        view_path = os.path.join('gui', 'git_file_list.ui')
+        view_path = os.path.abspath(view_path)
+        self.view = loadUi(view_path)
+
+        # setting styles
+        style_path = os.path.join('gui', 'git_file_list.qss')
+        style_path = os.path.abspath(style_path)
+        self.view.setStyleSheet(open(style_path, 'r').read())
+
+
 
     @pyqtSlot(list)
     def populate(self, files: List[PQFileModel]):
@@ -27,7 +39,7 @@ class PQFileListController(QObject):
         self.__model = [file.copy() for file in files]
         for child_model in self.model:
             child_view = PQFileController(child_model).view
-            self.view.layout().addWidget(child_view)
+            self.view.children_layout.addWidget(child_view)
             child_view.show()
 
     @pyqtSlot()
@@ -45,7 +57,7 @@ class PQFileListController(QObject):
         and deletes them
         :return: None
         """
-        layout = self.view.layout()
+        layout = self.view.children_layout
         while layout.count() > 0:
             item = layout.takeAt(0)
             widget = item.widget()
@@ -70,10 +82,19 @@ class PQFileController(QObject):
         self.__model = model
         self.__model.changed.connect(self.redraw)
 
-        self.view = loadUi("gui/git_file.ui")
+        # loading view
+        view_path = os.path.join('gui', 'git_file.ui')
+        view_path = os.path.abspath(view_path)
+        self.view = loadUi(view_path)
 
+        # adding handlers
         self.add_view_handlers()
         self.view.committed.clicked.connect(self.checkbox_clicked)
+
+        # setting styles
+        style_path = os.path.join('gui', 'git_file.qss')
+        style_path = os.path.abspath(style_path)
+        self.view.setStyleSheet(open(style_path, 'r').read())
 
         self.redraw()
 
